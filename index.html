@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garments Store </title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #f1f18a, #02e6ff8a);
+}
+        .category-section { display: flex; justify-content: center; gap: 30px; margin-bottom: 40px; flex-wrap: wrap; }
+        .cat-item { text-align: center; cursor: pointer; transition: 0.3s; }
+        .cat-circle { 
+            width: 80px; height: 80px; border-radius: 50%; background: #fff; 
+            display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 3px solid transparent;
+            overflow: hidden; margin-bottom: 8px;
+        }
+        .cat-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .cat-item:hover .cat-circle { border-color: #ff4757; transform: scale(1.1); }
+        .cat-item p { margin: 0; font-weight: bold; color: #333; }
+ 
+        .product-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; max-width: 1200px; margin: 0 auto; 
+        }
+        .card-container { height: 450px; perspective: 1000px; }
+        .card { width: 90%; height: 90%; position: relative; transition: transform 0.6s; transform-style: preserve-3d; }
+        .card-container:hover .card { transform: rotateY(180deg); }
+
+        .card-front, .card-back { 
+            position: absolute; width: 100%; height: 100%; 
+            backface-visibility: hidden; border-radius: 15px; overflow: hidden; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.732); 
+        }
+        .card-front { background: #fff; }
+        .card-front img { width: 100%; height: 70%; object-fit: cover; background: #eee; }
+        .card-info { padding: 15px; text-align: center; }
+
+        .card-back { 
+            background: #222; color: #fff; transform: rotateY(180deg); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; text-align: center;
+        }
+
+        .view-btn, .compare-btn, .download-btn { padding: 12px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 90%; font-weight: bold; }
+        .view-btn { background: #ff4757; color: white; }
+        .compare-btn { background: #3498db; color: white; }
+        .download-btn { background: #27ae60; color: white; }
+
+        
+        #comparisonArea { 
+            max-width: 600px; margin: 20px auto; background: linear-gradient(to right, rgb(66, 63, 95), orange, rgb(196, 196, 76), rgb(130, 193, 130), 4#333396);; padding: 20px; 
+            border-radius: 15px; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #f4f4f4; }
+        .compare-img { width: 80px; height: 100px; object-fit: cover; border-radius: 5px; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 90%; max-width: 300px; height: fit-content; border-radius: 15px; position: relative; text-align: center; }
+        .close-btn { position: absolute; right: 20px; top: 10px; font-size: 30px; cursor: pointer; color: #333; }
+        .modal-img { width: 100%; max-height: 350px; object-fit: cover; border-radius: 10px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<h1 style="text-align: center; margin-top: 30px;">Mega Garments Collection</h1>
+
+<div id="comparisonArea">
+    <h2>Product Comparison</h2>
+    <div id="compareTableContainer"></div>
+    <button class="view-btn" onclick="clearComparison()">Close Comparison</button>
+</div>
+
+<div class="category-section">
+    <div class="cat-item" onclick="filterProducts('all')"><div class="cat-circle"><img src="" alt="All"></div><p>All</p></div>
+    <div class="cat-item" onclick="filterProducts('man')"><div class="cat-circle"><img src="https://picsum.photos/100/100?sig=2" alt="Man"></div><p>Man</p></div>
+    <div class="cat-item" onclick="filterProducts('woman')"><div class="cat-circle"><img src="https://picsum.photos/100/100?sig=3" alt="Woman"></div><p>Woman</p></div>
+    <div class="cat-item" onclick="filterProducts('kids')"><div class="cat-circle"><img src="https://picsum.photos/100/100?sig=4" alt="Kids"></div><p>Kids</p></div>
+</div>
+
+<div class="product-grid" id="productGrid"></div>
+
+<div id="productModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div id="modalData"></div>
+    </div>
+</div>
+
+<script>
+  const products = [
+  
+        { id: 1, name: "Addidas", category: "man", price: 1000, image: "m add 1.jpg", desc: "Detail 1Men’s Adidas track pants in white with signature blue three stripes.Made from soft, comfortable fabric for sports and casual wear.Price: Rs. 1000." },
+        { id: 2, name: "addidas 2", category: "woman", price: 1200, image: "wa.1.jpg", desc: "Detail Women’s blue track pants by Adidas with a simple and stylish design.Made from comfortable fabric, perfect for casual wear and daily use.Price: Rs. 1200." },
+        { id: 3, name: "levis 3", category: "kids", price: 800, image: "l.k1.jpg", desc: "Detail " },
+        { id: 4, name: "addidas 4", category: "man", price: 1500, image: "m add 2.jpg", desc: "Detail 4" },
+        { id: 5, name: "addidas 5", category: "woman", price: 2000, image: "wa.2.jpg", desc: "Detail 5" },
+        { id: 6, name: "levis 6", category: "kids", price: 900, image: "l.k2.jpg", desc: "Detail 6" },
+        { id: 7, name: "addidas 7", category: "man", price: 1100, image: "m add 3.jpg", desc: "Detail 7" },
+        { id: 8, name: "addidas 8", category: "woman", price: 1300, image: "wa.3.jpg", desc: "Detail 8" },
+        { id: 9, name: "levis 9", category: "kids", price: 700, image: "l.k3.jpg", desc: "Detail 9" },
+        { id: 10, name: "addidas 10", category: "man", price: 1400, image: "m add 4.jpg", desc: "Detail 10" },
+        { id: 11, name: "bonanza 11", category: "woman", price: 1000, image: "b.w1.jpg", desc: "Detail 11" },
+        { id: 12, name: "levis 12", category: "kids", price: 1000, image: "l.k4.jpg", desc: "Detail 12" },
+        { id: 13, name: "addidas 13", category: "man", price: 1000, image: "b.1.jpg", desc: "Detail 13" },
+        { id: 14, name: "bonanza 14", category: "woman", price: 1000, image: "b.w2.jpg", desc: "Detail 14" },
+        { id: 15, name: "j.5", category: "kids", price: 1000, image: "j.k1.jpg", desc: "Detail 15" },
+        { id: 16, name: "bonanza 16", category: "man", price: 1000, image: "b.2.jpg", desc: "Detail 16" },
+        { id: 17, name: "bonanza 17", category: "woman", price: 1000, image: "b.w3.jpg", desc: "Detail 17" },
+        { id: 18, name: "j. 18", category: "kids", price: 1000, image: "j.k2.jpg", desc: "Detail 18" },
+        { id: 19, name: "bonanza 19", category: "man", price: 1000, image: "b.3.jpg", desc: "Detail 19" },
+        { id: 20, name: "j. 20", category: "woman", price: 1000, image: "j.w1.jpg", desc: "Detail 20" },
+        { id: 21, name: "nike 21", category: "kids", price: 1000, image: "n.k3.jpg", desc: "Detail 21" },
+        { id: 22, name: "nike  22", category: "man", price: 1000, image: "n.1.jpg", desc: "Detail 22" },
+        { id: 23, name: "j. 23", category: "woman", price: 1000, image: "j.w2.jpg", desc: "Detail 23" },
+        { id: 24, name: "polo 24", category: "kids", price: 1000, image: "p.k1.jpg", desc: "Detail 24" },
+        { id: 25, name: "nike 25", category: "man", price: 1000, image: "n.2.jpg", desc: "Detail 25" },
+        { id: 26, name: "j. 26", category: "woman", price: 1000, image: "j.w3.jpg", desc: "Detail 26" },
+        { id: 27, name: "polo 27", category: "kids", price: 1000, image: "p.k2.jpg", desc: "Detail 27" },
+        { id: 28, name: "nike 28", category: "man", price: 1000, image: "n.3.jpg", desc: "Detail 28" },
+        { id: 29, name: "j. 29", category: "woman", price: 1000, image: "j.w4.jpg", desc: "Detail 29" },
+        { id: 30, name: "polo 30", category: "kids", price: 1000, image: "p.k3.jpg", desc: "Detail 30" },
+        { id: 31, name: " nike 31", category: "man", price: 1000, image: "n.4.jpg", desc: "Detail 31" },
+        { id: 32, name: "levis 32", category: "woman", price: 1000, image: "l.w1.jpg", desc: "Detail 32" },
+        { id: 33, name: "nike 33", category: "kids", price: 1000, image: "n.k1.jpg", desc: "Detail 33" },
+        { id: 34, name: "polo 34", category: "man", price: 1000, image: "polo1 m.jpg", desc: "Detail 34" },
+        { id: 35, name: "levis 35", category: "woman", price: 1000, image: "l.w2.jpg", desc: "Detail 35" },
+        { id: 36, name: "polo 36", category: "man", price: 1000, image: "polo2 m.jpg", desc: "Detail 36" },
+        { id: 37, name: "polo 37", category: "man", price: 1000, image: "polo3 m.jpg", desc: "Detail 37" },
+        { id: 38, name: "nike  38", category: "woman", price: 1000, image: "n.w1.jpg", desc: "Detail 38" },
+        { id: 39, name: "nike  39", category: "kids", price: 1000, image: "n.k2.jpg", desc: "Detail 39" },
+        { id: 40, name: "j. 40", category: "man", price: 1000, image: " j.1.jpg", desc: "Detail 40" },
+        { id: 41, name: "nike  41", category: "woman", price: 1000, image: "n.w2.jpg", desc: "Detail 41" },
+        { id: 42, name: "nike  42", category: "kids", price: 1000, image: "n.k4.jpg", desc: "Detail 42" },
+        { id: 43, name: "j.43", category: "man", price: 1000, image: "j.2.jpg", desc: "Detail 43" },
+        { id: 44, name: "nike 44", category: "woman", price: 1000, image: "n.w3.jpg", desc: "Detail 44" },
+        { id: 45, name: "nike 45", category: "kids", price: 1000, image: "n.k5.jpg", desc: "Detail 45" },
+        { id: 46, name: "j. 46", category: "man", price: 1000, image: "j.5.jpg", desc: "Detail 46" },
+        { id: 47, name: "polo 47", category: "woman", price: 1000, image: "p.w1.jpg", desc: "Detail 47" },
+        { id: 48, name: "nike 48", category: "kids", price: 1000, image: "n.k6.jpg", desc: "Detail 48" },
+        { id: 49, name: "j.49", category: "man", price: 1000, image: "j.3.jpg", desc: "Detail 49" },
+        { id: 50, name: "polo 50", category: "woman", price: 1000, image: "p.w2.jpg", desc: "Detail 50" }
+        
+];
+
+    let compareList = [];
+    const grid = document.getElementById('productGrid');
+
+    function displayProducts(list) {
+        grid.innerHTML = '';
+        list.forEach(p => {
+            const imgPath = p.image || "https://via.placeholder.com/300x400";
+            grid.innerHTML += `
+                <div class="card-container">
+                    <div class="card">
+                        <div class="card-front">
+                            <img src="${imgPath}" alt="${p.name}">
+                            <div class="card-info">
+                                <b>${p.name}</b><br>
+                                <small style="color:gray">${p.category.toUpperCase()}</small><br>
+                                <span style="color:#ff4757; font-weight:bold;">Rs $. ${p.price}</span>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <h3>${p.name}</h3>
+                            <button class="view-btn" onclick="openModal(${p.id})">View Details</button>
+                            <button class="compare-btn" onclick="addToCompare(${p.id})">Compare</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function downloadDetail(id) {
+        const p = products.find(prod => prod.id === id);
+        const textContent = `PRODUCT DETAILS\n------------------\nName: ${p.name}\nCategory: ${p.category.toUpperCase()}\nPrice: Rs $. ${p.price}\nDescription: ${p.desc}\n------------------`;
+        const blob = new Blob([textContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = p.name.replace(/\s+/g, '_') + "_Details.txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function openModal(id) {
+        const p = products.find(prod => prod.id === id);
+        document.getElementById('modalData').innerHTML = `
+            <img src="${p.image}" class="modal-img">
+            <h2>${p.name}</h2>
+            <p style="color:#ff4757; font-size:20px; font-weight:bold;">Rs $. ${p.price}</p>
+            <p>${p.desc}</p>
+            <button class="view-btn" style="width:100%; margin-bottom:10px;">Add to Cart</button>
+            <button class="download-btn" style="width:100%" onclick="downloadDetail(${p.id})">Download Detail</button>
+        `;
+        document.getElementById('productModal').style.display = 'block';
+    }
+
+    function closeModal() { document.getElementById('productModal').style.display = 'none'; }
+
+    function filterProducts(cat) {
+        if (cat === 'all') displayProducts(products);
+        else displayProducts(products.filter(p => p.category === cat));
+    }
+
+   
+    function addToCompare(id) {
+        const product = products.find(p => p.id === id);
+        if (compareList.length < 2) {
+            if (!compareList.find(item => item.id === id)) {
+                compareList.push(product);
+                if (compareList.length === 1) alert("Select one more product to compare.");
+            } else {
+                alert("This product is already in compare list.");
+            }
+        }
+        if (compareList.length === 2) showComparison();
+    }
+
+    function showComparison() {
+        const area = document.getElementById('comparisonArea');
+        const container = document.getElementById('compareTableContainer');
+        area.style.display = 'block';
+        container.innerHTML = `
+            <table>
+                <tr><th>Feature</th><th>${compareList[0].name}</th><th>${compareList[1].name}</th></tr>
+                <tr><td>Image</td><td><img src="${compareList[0].image}" class="compare-img"></td><td><img src="${compareList[1].image}" class="compare-img"></td></tr>
+                <tr><td>Price</td><td>Rs. ${compareList[0].price}</td><td>Rs. ${compareList[1].price}</td></tr>
+                <tr><td>Category</td><td>${compareList[0].category.toUpperCase()}</td><td>${compareList[1].category.toUpperCase()}</td></tr>
+            </table>
+        `;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearComparison() { 
+        compareList = []; 
+        document.getElementById('comparisonArea').style.display = 'none'; 
+    }
+
+    window.onclick = (e) => { if(e.target.className == 'modal') closeModal(); }
+    displayProducts(products);
+</script>
+</body>
+</html>
